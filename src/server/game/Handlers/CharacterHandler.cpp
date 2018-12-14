@@ -358,6 +358,7 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
         WorldPackets::Character::EnumCharactersResult::RaceUnlock raceUnlock;
         raceUnlock.RaceID = requirement.first;
         raceUnlock.HasExpansion = GetAccountExpansion() >= requirement.second.Expansion;
+        raceUnlock.HasAchievement = requirement.second.AchievementId == 0;   /* Work around until account achievement are implemented */ 
         charEnum.RaceUnlockData.push_back(raceUnlock);
     }
 
@@ -987,7 +988,36 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
             else if (cEntry->CinematicSequenceID)
                 pCurrChar->SendCinematicStart(cEntry->CinematicSequenceID);
             else if (ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(pCurrChar->getRace()))
-                pCurrChar->SendCinematicStart(rEntry->CinematicSequenceID);
+            {
+                if (rEntry->CinematicSequenceID)
+                    pCurrChar->SendCinematicStart(rEntry->CinematicSequenceID);
+                else
+                {
+                    switch (pCurrChar->getRace())
+                    {
+                    case RACE_HIGHMOUNTAIN_TAUREN:
+                        pCurrChar->GetSceneMgr().PlayScene(1901);
+                        break;
+                    case RACE_NIGHTBORNE:
+                        pCurrChar->GetSceneMgr().PlayScene(1900);
+                        break;
+                    case RACE_LIGHTFORGED_DRAENEI:
+                        pCurrChar->GetSceneMgr().PlayScene(1902);
+                        break;
+                    case RACE_VOID_ELF:
+                        pCurrChar->GetSceneMgr().PlayScene(1903);
+                        break;
+                    case RACE_DARK_IRON_DWARF:
+                        pCurrChar->GetSceneMgr().PlayScene(2137);
+                        break;
+                        /* case RACE_MAGHAR_ORC: Need the scene id for Maghar orcs 
+                            pCurrChar->GetSceneMgr().PlayScene(1903); <update scene before uncommenting this>
+                            break; */
+                    default:
+                        break;
+                    }
+                }
+            }
 
             // send new char string if not empty
             if (!sWorld->GetNewCharString().empty())
